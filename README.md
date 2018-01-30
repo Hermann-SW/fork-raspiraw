@@ -17,14 +17,14 @@ Supported sensors:
 	imx219
 	ov5647
 
-## raspiraw command line options 
+## raspiraw command line options
 
 Table of contents:
 
 	$ raspiraw
-	
+
 	raspiraw Camera App 0.0.1
-	
+
 	-?, --help	: This help information
 	-md, --mode	: Set sensor mode <mode>
 	-hf, --hflip	: Set horizontal flip
@@ -143,7 +143,7 @@ Format: "delta,index,timestamp\n"
 Timestamp distribution analysis can be easily done this way:
 
 	$ cut -f1 -d, tstamps.csv | sort -n | uniq -c
-	      1 
+	      1
 	     13 1499
 	     17 1500
 	     31 1501
@@ -155,17 +155,17 @@ Timestamp distribution analysis can be easily done this way:
 	      3 1507
 	      1 3005
 	      2 3006
-	$ 
+	$
 
 
 This shows that frame deltas are 1503&micro;s &plusmn; 4&micro;s, which corresponds to 1,000,000/1503=665.3fps.
 Three frame skips happened during recording, and their indices can be easily determined by:
 
-	$ grep "^3" tstamps.csv 
+	$ grep "^3" tstamps.csv
 	3006,2,6027843627
 	3005,85,6027969857
 	3006,554,6028676146
-	$ 
+	$
 
 So we know that frames 0085-0553 have no frame skips. All tools do this timestamp analysis for you.
 
@@ -226,9 +226,9 @@ Currently the capturing tools do not use --regs option anymore. This option keep
 
 First you need to convert the .ppm frames you are interested in into .png format, eg. with netpbm tools:
 
-	pnmtopng out.0123.ppm.d > out.0123.ppm.d.png 
+	pnmtopng out.0123.ppm.d > out.0123.ppm.d.png
 
-This gstreamer pipeline creates .ogg video. You can choose frame rate the video should play with (eg. 1fps for very slow motion), and start index of the frames to be taken. 
+This gstreamer pipeline creates .ogg video. You can choose frame rate the video should play with (eg. 1fps for very slow motion), and start index of the frames to be taken.
 
 	gst-launch-1.0 multifilesrc location="out.%04d.ppm.d.png" index=300 caps="image/png,framerate=\(fraction\)1/1" ! pngdec ! videorate ! videoconvert ! videorate ! theoraenc ! oggmux ! filesink location="$1.ogg"
 
@@ -270,10 +270,17 @@ Execute camera_i2c to make raspiraw work.
 #### tools usage
 
 There are quite soome tools in [tools directory](tools/).
-They allow to do a video capture with frame delay and frame skip analysis with just a single command.
+They allow to do a video capture with frame delay and frame skip analysis with
+just a single command.
 And to repeat the command if you do not like the analysis.
 
-There are several tools for capturing. [640x128_s](tools/640x128_s) creates 640x128 frames while only capturing 64 lines. Stretching is needed in post processing. [640x128](tools/640x128) captures 640x128 frames as well, but all 128 lines. There is a minor difference in viewing the frames, and a bigger difference in capturing framerate that can be achieved. Stretched 640x128 frames can be captured at 665(502) fps on Pi 2B/3B(Pi Zero[W]), whereas full capturing of 128 lines allows for 350fps (only). 
+There are several tools for capturing. [640x128_s](tools/640x128_s) creates 640x128
+frames while only capturing 64 lines. Stretching is needed in post processing.
+[640x128](tools/640x128) captures 640x128 frames as well, but all 128 lines. There
+is a minor difference in viewing the frames, and a bigger difference in capturing
+framerate that can be achieved. Stretched 640x128 frames can be captured at 665(502)
+fps on Pi 2B/3B(Pi Zero[W]), whereas full capturing of 128 lines allows for 350fps
+(only).
 
 This table gives modes and framerates possible with raspiraw.
 
@@ -309,8 +316,12 @@ Sample:
 	3006,275,9698419172
 	$
 
-[raw2ogg2anim ](tools/raw2ogg2anim) is script allowing you to create an .ogg video and an animated .gif.
-Specify output file prefix for .ogg video and .anim.gif animated gif created. Then specify frame start and stop index as well, and the target framerate. Optionally you can add "d"/"dd" argument for stretching each frame by factor of 2/4 vertically before generation of output. "d"/"dd" option is used by "_s"/"_S" mode tools.
+[raw2ogg2anim ](tools/raw2ogg2anim) is script allowing you to create an .ogg video
+and an animated .gif.
+Specify output file prefix for .ogg video and .anim.gif animated gif created. Then
+specify frame start and stop index as well, and the target framerate. Optionally
+you can add "d"/"dd" argument for stretching each frame by factor of 2/4 vertically
+before generation of output. "d"/"dd" option is used by "_s"/"_S" mode tools.
 
 	$ ~/raspiraw/tools/raw2ogg2anim
 	format: raw2ogg2anim vname first last fps [d[d]]
@@ -318,14 +329,18 @@ Specify output file prefix for .ogg video and .anim.gif animated gif created. Th
 
 ## Where is the limit?
 
-Above sample did capture 640x128 frames (stretched) at 665fps. It is possible to capture 640x64 stretched frames with 900fps!
+Above sample did capture 640x128 frames (stretched) at 665fps. It is possible to
+capture 640x64 stretched frames with 900fps!
 [https://www.raspberrypi.org/forums/viewtopic.php?f=63&t=109523&p=1246776#p1246776](https://www.raspberrypi.org/forums/viewtopic.php?f=63&t=109523&p=1246776#p1246776)
 
 ![900fps sample frame just described](res/out.3000.ppm.d.png)
 
-Sharp and well lighted video can be taken with NoIR camera with lense and 3W infrared LED. This is 640x128 frame from video taken at 665fps:
+Sharp and well lighted video can be taken with NoIR camera with lense and 3W
+infrared LED. This is 640x128 frame from video taken at 665fps:
 
 ![665fps NoIR camera with lense sample frame](res/out.1000.ppm.d.png)
 
-This is 1296x720_S format frame taken at 190fps, only every 4th row gets captured (allowing for high framerate while keeping fov), and post processing has to call "double" tool two times for each frame:
+This is 1296x720_S format frame taken at 190fps, only every 4th row gets captured
+(allowing for high framerate while keeping fov), and post processing has to call
+"double" tool two times for each frame:
 ![1296x720_S mode sample frame](res/Screenshot179.png)

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # needs: dcraw, double, netpbm tools, gstreamer, gifenc.sh
-# index in gst-lauch-1.0 call below has to match with start of copy loop
 
 if [ "$4" = "" ]; then echo "format: `basename $0` vname first last fps [d[d]]"; exit; fi
 
@@ -45,7 +44,7 @@ echo
 echo ".ppm.d -> .ppm.d.png"
 for f in out.*.ppm.d
 do
-  pnmtopng $f > $f.png 
+  pnmtopng $f > $f.png
   echo -en "$f     \r"
 done
 echo
