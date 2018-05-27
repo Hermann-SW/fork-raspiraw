@@ -134,6 +134,12 @@ struct sensor_def
 
 	uint16_t gain_reg;
 	int gain_reg_num_bits;
+
+	uint16_t xos_reg;
+	int xos_reg_num_bits;
+
+	uint16_t yos_reg;
+	int yos_reg_num_bits;
 };
 
 
@@ -169,6 +175,8 @@ enum {
 	CommandRegs,
 	CommandHinc,
 	CommandVinc,
+	CommandVoinc,
+	CommandHoinc,
 	CommandFps,
 	CommandWidth,
 	CommandHeight,
@@ -201,7 +209,9 @@ static COMMAND_LIST cmdline_commands[] =
 	{ CommandAwbGains, 	"-awbgains",	"awbg", "Set the AWB gains to use.", 1 },
 	{ CommandRegs,	 	"-regs",	"r",  "Change (current mode) regs", 0 },
 	{ CommandHinc,		"-hinc",	"hi", "Set horizontal odd/even inc reg", -1},
-	{ CommandVinc,		"-vinc",	"vi", "Set vertical odd/even inc reg", -1},
+	{ CommandVinc,		"-vinc",	"vi", "Set vertical odd/even inc reg", -1},   // ov5647
+	{ CommandVoinc,		"-voinc",	"voi","Set vertical odd inc reg", -1},        // imx219
+	{ CommandHoinc,		"-hoinc",	"hoi","Set horizontal odd inc reg", -1},      // imx219
 	{ CommandFps,		"-fps",		"f",  "Set framerate regs", -1},
 	{ CommandWidth,		"-width",	"w",  "Set current mode width", -1},
 	{ CommandHeight,	"-height",	"h",  "Set current mode height", -1},
@@ -241,6 +251,8 @@ typedef struct {
 	char *regs;
 	int hinc;
 	int vinc;
+	int voinc;
+	int hoinc;
 	double fps;
 	int width;
 	int height;
@@ -751,6 +763,22 @@ static int parse_cmdline(int argc, char **argv, RASPIRAW_PARAMS_T *cfg)
 					i++;
 				break;
 
+			case CommandVoinc:
+				if (strlen(argv[i+1]) != 2 ||
+                                    sscanf(argv[i + 1], "%x", &cfg->voinc) != 1)
+					valid = 0;
+				else
+					i++;
+				break;
+
+			case CommandHoinc:
+				if (strlen(argv[i+1]) != 2 ||
+                                    sscanf(argv[i + 1], "%x", &cfg->hoinc) != 1)
+					valid = 0;
+				else
+					i++;
+				break;
+
 			case CommandFps:
                                 if (sscanf(argv[i + 1], "%lf", &cfg->fps) != 1)
 					valid = 0;
@@ -862,6 +890,8 @@ int main(int argc, char** argv) {
 		.regs = NULL,
 		.hinc = -1,
 		.vinc = -1,
+		.voinc = -1,
+		.hoinc = -1,
 		.fps = -1,
 		.width = -1,
 		.height = -1,
@@ -949,14 +979,26 @@ int main(int argc, char** argv) {
 
 	if (cfg.hinc >= 0)
 	{
-		// TODO: handle modes different to ov5647 as well
-		modReg(sensor_mode, 0x3814, 0, 7, cfg.hinc, EQUAL);
+                if (!strcmp(sensor->name, "ov5647"))
+		        modReg(sensor_mode, 0x3814, 0, 7, cfg.hinc, EQUAL);
 	}
 
 	if (cfg.vinc >= 0)
 	{
-		// TODO: handle modes different to ov5647 as well
-		modReg(sensor_mode, 0x3815, 0, 7, cfg.vinc, EQUAL);
+                if (!strcmp(sensor->name, "ov5647"))
+		        modReg(sensor_mode, 0x3815, 0, 7, cfg.vinc, EQUAL);
+	}
+
+	if (cfg.voinc >= 0)
+	{
+                if (!strcmp(sensor->name, "imx219"))
+		        modReg(sensor_mode, 0x0171, 0, 2, cfg.voinc, EQUAL);
+	}
+
+	if (cfg.hoinc >= 0)
+	{
+                if (!strcmp(sensor->name, "imx219"))
+		        modReg(sensor_mode, 0x0170, 0, 2, cfg.hoinc, EQUAL);
 	}
 
 	if (cfg.fps > 0)
@@ -968,34 +1010,36 @@ int main(int argc, char** argv) {
 
 	if (cfg.width > 0)
 	{
-		sensor_mode->width = cfg.width;
-		// TODO: handle modes different to ov5647 as well
-		modReg(sensor_mode, 0x3808, 0, 3, cfg.width >>8, EQUAL);
-		modReg(sensor_mode, 0x3809, 0, 7, cfg.width &0xFF, EQUAL);
+	        sensor_mode->width = cfg.width;
+	        modReg(sensor_mode, sensor->xos_reg+0, 0, 3, cfg.width >>8, EQUAL);
+	        modReg(sensor_mode, sensor->xos_reg+1, 0, 7, cfg.width &0xFF, EQUAL);
 	}
 
 	if (cfg.height > 0)
 	{
 		sensor_mode->height = cfg.height;
-		// TODO: handle modes different to ov5647 as well
-		modReg(sensor_mode, 0x380A, 0, 3, cfg.height >>8, EQUAL);
-		modReg(sensor_mode, 0x380B, 0, 7, cfg.height &0xFF, EQUAL);
+		modReg(sensor_mode, sensor->yos_reg+0, 0, 3, cfg.height >>8, EQUAL);
+		modReg(sensor_mode, sensor->yos_reg+1, 0, 7, cfg.height &0xFF, EQUAL);
 	}
 
 	if (cfg.left > 0)
 	{
-		// TODO: handle modes different to ov5647 as well
-		int val = cfg.left * (cfg.mode < 2 ? 1 : 1 << (cfg.mode / 2 - 1));
-		modReg(sensor_mode, 0x3800, 0, 3, val >>8, EQUAL);
-		modReg(sensor_mode, 0x3801, 0, 7, val &0xFF, EQUAL);
+                if (!strcmp(sensor->name, "ov5647"))
+                {
+		        int val = cfg.left * (cfg.mode < 2 ? 1 : 1 << (cfg.mode / 2 - 1));
+		        modReg(sensor_mode, 0x3800, 0, 3, val >>8, EQUAL);
+		        modReg(sensor_mode, 0x3801, 0, 7, val &0xFF, EQUAL);
+                }
 	}
 
 	if (cfg.top > 0)
 	{
-		// TODO: handle modes different to ov5647 as well
-		int val = cfg.top * (cfg.mode < 2 ? 1 : 1 << (cfg.mode / 2 - 1));
-		modReg(sensor_mode, 0x3802, 0, 3, val >>8, EQUAL);
-		modReg(sensor_mode, 0x3803, 0, 7, val &0xFF, EQUAL);
+                if (!strcmp(sensor->name, "ov5647"))
+                {
+		        int val = cfg.top * (cfg.mode < 2 ? 1 : 1 << (cfg.mode / 2 - 1));
+		        modReg(sensor_mode, 0x3802, 0, 3, val >>8, EQUAL);
+		        modReg(sensor_mode, 0x3803, 0, 7, val &0xFF, EQUAL);
+                }
 	}
 
 

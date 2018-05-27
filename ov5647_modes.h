@@ -886,6 +886,12 @@ struct sensor_def ov5647 = {
 
    .gain_reg =             0x350A,
    .gain_reg_num_bits =    10,
+
+   .xos_reg =              0x3808,
+   .xos_reg_num_bits =     12,      // x_output_size [11:8] and [7:0] (ov5647 datasheet)
+
+   .yos_reg =              0x380A,
+   .yos_reg_num_bits =     12,      // y_output_size [11:8] and [7:0] (ov5647 datasheet)
 };
 
 #endif

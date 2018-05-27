@@ -341,6 +341,12 @@ struct sensor_def adv7282 = {
 
    .gain_reg =             0,
    .gain_reg_num_bits =    0,
+
+   .xos_reg =              0,
+   .xos_reg_num_bits =     0,
+
+   .yos_reg =              0,
+   .yos_reg_num_bits =     0,
 };
 
 #endif

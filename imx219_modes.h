@@ -621,6 +621,12 @@ struct sensor_def imx219 = {
 
       .gain_reg =             0x0157,
       .gain_reg_num_bits =    8,    //Only valid up to 230.
+
+      .xos_reg =              0x016C,
+      .xos_reg_num_bits =     12,      // x_output_size [11:8] and [7:0] (imx219 datasheet)
+
+      .yos_reg =              0x016E,
+      .yos_reg_num_bits =     12,      // y_output_size [11:8] and [7:0] (imx219 datasheet)
 };
 
 #endif

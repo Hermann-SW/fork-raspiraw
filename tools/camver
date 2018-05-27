@@ -1,0 +1,11 @@
+#!/bin/bash
+dt=`vcgencmd get_camera | grep "detected=1"`
+if [ "$dt" = "" ]; then
+  echo "no camera detected"
+else 
+  cd ~/raspiraw ; ./camera_i2c 2>&1 | cat > /dev/null
+  v1=`i2cdetect -y 0 54 54 | grep " 36"` ; v2=`i2cdetect -y 0 16 16 | grep " 10"`
+  if [ "$v1" != "" ]; then echo -n "v1"; fi
+  if [ "$v2" != "" ]; then echo -n "v2"; fi
+  echo " camera found"
+fi
