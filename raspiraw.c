@@ -177,6 +177,7 @@ enum {
 	CommandVinc,
 	CommandVoinc,
 	CommandHoinc,
+	CommandBin44,
 	CommandFps,
 	CommandWidth,
 	CommandHeight,
@@ -212,6 +213,7 @@ static COMMAND_LIST cmdline_commands[] =
 	{ CommandVinc,		"-vinc",	"vi", "Set vertical odd/even inc reg", -1},   // ov5647
 	{ CommandVoinc,		"-voinc",	"voi","Set vertical odd inc reg", -1},        // imx219
 	{ CommandHoinc,		"-hoinc",	"hoi","Set horizontal odd inc reg", -1},      // imx219
+	{ CommandBin44,		"-bin44",	"b44","Set 4x4 binning", -1},      // imx219
 	{ CommandFps,		"-fps",		"f",  "Set framerate regs", -1},
 	{ CommandWidth,		"-width",	"w",  "Set current mode width", -1},
 	{ CommandHeight,	"-height",	"h",  "Set current mode height", -1},
@@ -253,6 +255,7 @@ typedef struct {
 	int vinc;
 	int voinc;
 	int hoinc;
+	int bin44;
 	double fps;
 	int width;
 	int height;
@@ -779,6 +782,10 @@ static int parse_cmdline(int argc, char **argv, RASPIRAW_PARAMS_T *cfg)
 					i++;
 				break;
 
+			case CommandBin44:
+                                cfg->bin44 = 1;
+				break;
+
 			case CommandFps:
                                 if (sscanf(argv[i + 1], "%lf", &cfg->fps) != 1)
 					valid = 0;
@@ -892,6 +899,7 @@ int main(int argc, char** argv) {
 		.vinc = -1,
 		.voinc = -1,
 		.hoinc = -1,
+		.bin44 = 0,
 		.fps = -1,
 		.width = -1,
 		.height = -1,
@@ -1042,6 +1050,40 @@ int main(int argc, char** argv) {
                 }
 	}
 
+	if (cfg.bin44 == 1)
+	{
+            if (!strcmp(sensor->name, "imx219"))
+            {
+fprintf(stderr,"start\n");
+		unsigned nwidth, nheight, border, end;
+ 		// enabled 4x4 binning
+		modReg(sensor_mode, 0x0174, 0, 7, 2, EQUAL);
+		modReg(sensor_mode, 0x0175, 0, 7, 2, EQUAL);
+		
+		// calculate native fov x borders
+		nwidth = cfg.width*4;
+		border = (3280 - nwidth)/2;
+		end = 3280 - border - 1;
+		
+		// set x params
+		modReg(sensor_mode, 0x0164, 0, 7, border>>8, EQUAL);
+		modReg(sensor_mode, 0x0165, 0, 7, border&0xff, EQUAL);
+		modReg(sensor_mode, 0x0166, 0, 7, end>>8, EQUAL);
+		modReg(sensor_mode, 0x0167, 0, 7, end&0xff, EQUAL);
+		
+		// calculate native fov y borders 
+		nheight = cfg.height*4;
+		border = (2464 - nheight)/2;
+		end = 2464  - border - 1;
+		
+		// set y params
+		modReg(sensor_mode, 0x0168, 0, 7, border>>8, EQUAL);
+		modReg(sensor_mode, 0x0169, 0, 7, border&0xff, EQUAL);
+		modReg(sensor_mode, 0x016a, 0, 7, end>>8, EQUAL);
+		modReg(sensor_mode, 0x016b, 0, 7, end&0xff, EQUAL);
+fprintf(stderr,"end\n");
+            }
+	}
 
 	if (cfg.bit_depth == -1)
 	{

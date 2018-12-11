@@ -108,7 +108,7 @@ gpio -g mode 45 alt1
 #shutdown
 # you need this one: https://github.com/6by9/rpi3-gpiovirtbuf
 #gpio -g write 41 1
-./rpi3-gpiovirtbuf s 133 1
+`dirname $0`/rpi3-gpiovirtbuf s 133 1
 #LED
 #gpio -g write 32 1
 i2cdetect -y 0
