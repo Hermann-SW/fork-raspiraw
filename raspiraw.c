@@ -1057,11 +1057,12 @@ int main(int argc, char** argv) {
 fprintf(stderr,"start\n");
 		unsigned nwidth, nheight, border, end;
  		// enabled 4x4 binning
-		modReg(sensor_mode, 0x0174, 0, 7, 2, EQUAL);
-		modReg(sensor_mode, 0x0175, 0, 7, 2, EQUAL);
+//		modReg(sensor_mode, 0x0174, 0, 7, 2, EQUAL);
+//		modReg(sensor_mode, 0x0175, 0, 7, 2, EQUAL);
 		
 		// calculate native fov x borders
-		nwidth = cfg.width*4;
+//		nwidth = cfg.width*4 * ((cfg.hoinc == 3) ? 2 : 1);
+		nwidth = cfg.width*2 * ((cfg.hoinc == 3) ? 2 : 1);
 		border = (3280 - nwidth)/2;
 		end = 3280 - border - 1;
 		
@@ -1072,7 +1073,8 @@ fprintf(stderr,"start\n");
 		modReg(sensor_mode, 0x0167, 0, 7, end&0xff, EQUAL);
 		
 		// calculate native fov y borders 
-		nheight = cfg.height*4;
+//		nheight = cfg.height*4 * ((cfg.voinc == 3) ? 2 : 1);
+		nheight = cfg.height*2 * ((cfg.voinc == 3) ? 2 : 1);
 		border = (2464 - nheight)/2;
 		end = 2464  - border - 1;
 		
